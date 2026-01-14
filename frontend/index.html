@@ -1,41 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Wolt Barcode Scanner</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Barcode Scanner – SWE Catalog Tools</title>
+
+  <!-- Adobe Fonts -->
+  <link rel="stylesheet" href="https://use.typekit.net/txf7cul.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Scanner CSS -->
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
+  <div class="container">
 
-<h1>Barcode Scanner</h1>
-<div id="status">CV: loading…</div>
+    <!-- HEADER -->
+    <div class="header">
+      <h1>Barcode Scanner</h1>
+      <p>Scan product GTINs directly into SWE Catalog Tools</p>
+    </div>
 
+    <!-- TOOL CARD -->
+    <div class="tool-card tool-card-large">
 
-<div id="camera-container">
-  <video id="video" autoplay playsinline></video>
+      <div id="camera-container">
+        <video id="video" autoplay playsinline></video>
+        <canvas id="overlay"></canvas>
+        <canvas id="canvas"></canvas>
+      </div>
 
-  <!-- Overlay for focus box + future barcode boxes -->
-  <canvas id="overlay"></canvas>
+      <div class="scanner-output">
+        <div class="last-scan-label">Last scan</div>
+        <div id="gtin">—</div>
+      </div>
 
-  <!-- Work canvas stays hidden -->
-  <canvas id="canvas"></canvas>
-</div>
+    </div>
 
-<div id="output">
-  <div>Last scan:</div>
-  <div id="gtin">—</div>
-</div>
+    <!-- BATCH LIST -->
+    <div class="tool-card" style="margin-top:24px;">
+      <h2>Scanned items</h2>
+      <ul id="scan-list"></ul>
+    </div>
 
-<div id="batch">
-  <h2>Scanned items</h2>
-  <ul id="scan-list"></ul>
-</div>
+    <!-- Beep -->
+    <audio id="beep">
+      <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
+    </audio>
 
-<audio id="beep">
-  <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
-</audio>
+  </div>
 
-
-<script type="module" src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
