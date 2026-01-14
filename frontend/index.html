@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Wolt Barcode Scanner</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<h1>Barcode Scanner</h1>
+<div id="status">CV: loading…</div>
+
+
+<div id="camera-container">
+  <video id="video" autoplay playsinline></video>
+
+  <!-- Overlay for focus box + future barcode boxes -->
+  <canvas id="overlay"></canvas>
+
+  <!-- Work canvas stays hidden -->
+  <canvas id="canvas"></canvas>
+</div>
+
+<div id="output">
+  <div>Last scan:</div>
+  <div id="gtin">—</div>
+</div>
+
+<div id="batch">
+  <h2>Scanned items</h2>
+  <ul id="scan-list"></ul>
+</div>
+
+<audio id="beep">
+  <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
+</audio>
+
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

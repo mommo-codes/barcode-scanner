@@ -1,0 +1,60 @@
+body {
+  background: #0a2540;
+  color: white;
+  font-family: system-ui;
+  text-align: center;
+}
+
+#camera-container {
+  position: relative;
+  width: 90vw;
+  max-width: 600px;
+  margin: auto;
+}
+
+video {
+  width: 100%;
+  border-radius: 12px;
+}
+
+#overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#canvas {
+  display: none;
+}
+
+#output {
+  margin-top: 20px;
+  font-size: 28px;
+}
+
+#gtin {
+  font-weight: bold;
+  color: #00ffb3;
+}
+
+#batch {
+  margin-top: 20px;
+  text-align: left;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#scan-list {
+  list-style: none;
+  padding: 0;
+}
+
+#scan-list li {
+  padding: 8px;
+  border-bottom: 1px solid #1f3b5c;
+  font-size: 18px;
+}
