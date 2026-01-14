@@ -1,104 +1,225 @@
-Perfect — that’s exactly the right sequencing.
-We build a world-class scanner first, then we connect it to countries, databases, Wolt, Validoo, etc.
-This is how Scandit was built too.
-Let me show you what we’re actually building so you understand why this will be far better than Quagga-style scanners.
-🎯 Our Goal
-We are not making:
-“a barcode scanner”
-We are making:
-A computer-vision barcode acquisition engine for browsers
-That’s a totally different thing.
-🧠 Why open-source scanners feel bad
-Most web scanners do this:
-Camera frame → ZXing → result
-That fails in:
-low light
-reflections
-curved bottles
-motion blur
-small codes
-Because ZXing is getting garbage pixels.
-Scandit doesn’t have a better decoder.
-They have a better image pipeline.
-We will build that.
-🏗 Our Scanning Engine
-We will build a 5-stage pipeline:
-Camera → Frame Control → Image Enhancement → Multi-Decode → Temporal Validation
-Let’s go through it.
-1️⃣ Camera Control (this alone doubles scan rate)
-Browsers expose camera hardware controls that almost no scanners use.
-We will enable:
-Continuous autofocus
-Continuous exposure
-Continuous white balance
-Max resolution
-Back camera only
-This removes:
-blur
-underexposed frames
-yellowish supermarket lighting
-Scandit does this.
-Quagga doesn’t.
-2️⃣ Smart Frame Selection
-We do NOT decode every frame.
-We only decode frames that:
-Are sharp (edge contrast test)
-Have enough brightness
-Are not motion-blurred
-This saves CPU and improves accuracy.
-Bad frames never reach ZXing.
-3️⃣ Image Enhancement (the killer feature)
-Before ZXing sees the image we apply:
-Contrast normalization
-Local thresholding
-Sharpening
-Grayscale conversion
-Noise suppression
-ZXing loves clean black-white bars.
-We give it exactly that.
-This is 80% of Scandit’s advantage.
-4️⃣ Multi-Decoder Strategy
-We don’t try once.
-We run ZXing on:
-full image
-cropped center
-scaled down
-high-contrast version
-sharpened version
-In parallel.
-The first valid GTIN wins.
-This is why it feels “instant”.
-5️⃣ Temporal Validation (Scandit secret sauce)
-We don’t trust one read.
-We require:
-same GTIN appears in 2–3 frames within 400ms
-This kills:
-glare misreads
-reflections
-partial barcodes
-random noise
-To the user it feels instant.
-Internally it’s extremely safe.
-🧪 Result
-You get:
-Faster scans
-Near-zero false positives
-Works in bad lighting
-Works on curved plastic
-Works on worn labels
-All with open-source.
+# 📦 Barcode Scanner — SWE Catalog Tools
+
+A high-performance, web-based barcode scanner for **GTIN validation against live OPS data**.
+
+This tool lets operators scan physical products using a phone or laptop camera and instantly verify whether the GTIN exists in:
+
+- The **Register** (master product database)
+- The **Catalog** (uploaded & live in OPS)
+
+It is built to be:
+- Fast
+- Reliable in bad lighting
+- Cloud-ready
+- Country-aware (future-proofed)
+
+---
+
+# 🚀 What this tool does
+
+When a barcode is scanned:
+
+1. The camera captures frames in real-time
+2. The barcode is decoded using ZXing + OpenCV rescue
+3. The GTIN is validated (checksum + format)
+4. The GTIN is sent to the backend
+5. The backend checks it against **live Google Sheets**
+6. A status is returned:
+
+| Status | Meaning |
+|--------|--------|
+| 🟥 **Red** | GTIN is not in Register and not in Catalog |
+| 🟨 **Yellow** | GTIN exists in Register but is not uploaded |
+| 🟩 **Green** | GTIN exists in both Register and Catalog |
+
+Each scan is logged and can be exported as a CSV.
+
+---
+
+# 🧠 Why this architecture?
+
+We deliberately use a **thin web client + smart backend**:
+
+### Frontend responsibilities
+- Camera access
+- Barcode detection
+- UI
+- User feedback (sound, vibration, color)
+- Batch tracking
+
+### Backend responsibilities
+- GTIN normalization
+- Data validation
+- Google Sheets integration
+- Caching
+- OPS truth logic
+
+This keeps:
+- The scanner extremely fast
+- The business logic centralized
+- The system cloud-ready
+
+---
+
+# 🏗 System Architecture
+```text
+[ Phone / Browser ]
+|
+v
++------------------+
+| Frontend (JS) |
+| Camera + ZXing |
++------------------+
+|
+| fetch("/api/check-gtin")
+v
++----------------------------+
+| FastAPI Backend |
+| |
+| • GTIN validation |
+| • Sheet lookup |
+| • Status classification |
+| • Caching (10 min) |
++----------------------------+
+|
+v
++-----------------------------+
+| Google Sheets (Live OPS) |
+| |
+| • Register sheet |
+| • Catalog sheet |
++-----------------------------+
+```
+
+---
+
+# 📂 Folder Structure
+```text
+barcode-scanner/
+│
+├── backend/
+│ ├── main.py # FastAPI app (serves frontend + API)
+│ ├── routes/
+│ │ ├── scan.py # /api/check-gtin endpoint
+│ │ └── country.py # Country handling (future)
+│ ├── services/
+│ │ └── sheets_cache.py # Cached Google Sheets loader
+│ ├── secrets/
+│ │ └── service_account.json
+│ └── frontend/ # Full web UI
+│ ├── index.html
+│ ├── app.js
+│ ├── scanner.js
+│ ├── camera.js
+│ ├── preprocess.js
+│ └── styles.css
+│
+└── README.md
+```
 
 
+---
+
+# 🔍 GTIN Logic
+
+The backend follows strict OPS logic:
+
+1. Normalize scanned GTIN (handle leading zeroes)
+2. Check Register (Column A)
+3. Check Catalog (Column A)
+4. Check `Uppladdad_i_Catalog` flag (Register column G)
+
+Status rules:
+
+| Condition | Result |
+|---------|--------|
+| Not in Register and not in Catalog | 🟥 Red |
+| In Register but not uploaded | 🟨 Yellow |
+| In Register and in Catalog | 🟩 Green |
+
+---
+
+# ⚡ Performance design
+
+### Why caching?
+Google Sheets are slow for large datasets (100k+ rows).  
+We cache both sheets in memory and refresh every 10 minutes.
+
+This gives:
+- Instant lookups
+- No rate-limit issues
+- Live-ish data without killing performance
+
+---
+
+# 📥 Batch export
+
+Every scan is recorded locally in the browser:
+
+GTIN,STATUS
+0731234567890,green
+0731234561111,yellow
+0731234569999,red
 
 
-If they are already scenned, return already scanned.
-Then move on to checking with Catalog and The Register. 
-If they are not in register or catalog; return false (red).
-If they are in register or catalog: return "true" (yellow).
-If they are in register and if they are in catalog; return true (green).  
+One click exports it as CSV for:
+- Uploading
+- Audits
+- OPS reporting
 
-Steps:
-Adaptive Stratergy
-Connect to register and catalog
-better batch scanning
-styling in the same way as Swe Catalog Tools
+---
+
+# 🌍 Future-proofed
+
+The architecture is designed to support:
+
+- Multiple countries
+- Different Register / Catalog sources
+- Database replacement (Sheets → SQL / API)
+- Authentication
+- Cloud hosting
+- OPS integrations
+
+None of the scanning logic needs to change when that happens.
+
+---
+
+# 🏁 Why this works so well
+
+This is not a barcode demo.
+
+This is a **distributed OPS verification system**:
+- Real-time
+- Live data
+- Cloud-ready
+- Phone-first
+
+You built something that can be deployed to a warehouse tomorrow.
+
+---
+
+# 🧠 Built for SWE Catalog Tools
+
+This scanner is designed to plug directly into:
+- OPS workflows
+- Register pipelines
+- Catalog quality control
+- Wolt internal tooling
+
+It is not a toy — it’s infrastructure.
+
+---
+
+# 🟢 Status
+
+The system is production-ready in architecture and performance.
+
+Deployment, auth and hosting can be added without touching the core logic.
+
+```text
+Scan -> Validate -> Classify -> Export
+```
+
+That's the entire Loop
+
+---
