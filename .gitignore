@@ -1,0 +1,6 @@
+backend/secrets/
+*.json
+.venv/
+__pycache__/
+*.pyc
+*.yml

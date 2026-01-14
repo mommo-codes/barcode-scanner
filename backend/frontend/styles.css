@@ -138,3 +138,42 @@ video {
     font-weight: 700;
     color: #1f2937;
 }
+
+.scan-red {
+  color: #7f1d1d;
+  background: #fee2e2;
+}
+
+.scan-yellow {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.scan-green {
+  color: #065f46;
+  background: #d1fae5;
+}
+
+#scan-list li {
+  border-radius: 8px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+button.primary {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: "Nunito", system-ui, sans-serif;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+button.primary:hover {
+    background: #2563eb;
+}
