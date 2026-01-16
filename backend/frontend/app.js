@@ -168,6 +168,7 @@ try {
     if (data.status === "red") li.classList.add("scan-red");
     if (data.status === "yellow") li.classList.add("scan-yellow");
     if (data.status === "green") li.classList.add("scan-green");
+    if (data.status === "orange") li.classList.add("scan-orange");
 
     list.prepend(li);
   },

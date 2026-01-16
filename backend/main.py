@@ -2,8 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from routes.scan import router as scan_router
-from routes.country import router as country_router
+from backend.routes.scan import router as scan_router
+from backend.routes.country import router as country_router
 import os
 
 app = FastAPI()

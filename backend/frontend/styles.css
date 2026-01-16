@@ -145,8 +145,13 @@ video {
 }
 
 .scan-yellow {
-  color: #92400e;
+  color: #dcc465;
   background: #fef3c7;
+}
+
+.scan-orange {
+  color: #e17725;
+  background: #ffedd5;
 }
 
 .scan-green {
