@@ -23,6 +23,9 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 
+<div id="toast" class="toast hidden"></div>
+
+
 <body>
   <div class="container app-layout">
 
@@ -30,6 +33,14 @@
     <div class="header">
       <h1>Barcode Scanner</h1>
       <p>Scan product GTINs directly from DataBase</p>
+
+      <div class="scan-mode">
+        <label for="price-mode">Scan mode</label>
+        <select id="price-mode">
+          <option value="no-price">No price</option>
+          <option value="price">Price</option>
+        </select>
+      </div>
     </div>
 
     <!-- MAIN APP AREA -->
@@ -61,6 +72,22 @@
       Download CSV
     </button>
 
+    <!-- 🔹 PRICE INPUT MODAL (NON-BLOCKING) -->
+    <div id="price-modal" class="price-modal hidden">
+      <div class="price-box">
+        <h3>Enter price</h3>
+        <input
+          id="price-input"
+          type="number"
+          step="0.01"
+          inputmode="decimal"
+          placeholder="0.00"
+        />
+        <button id="price-confirm" class="primary">OK</button>
+      </div>
+    </div>
+
+    <!-- Beep -->
     <audio id="beep">
       <source
         src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"

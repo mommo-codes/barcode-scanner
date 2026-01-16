@@ -2,50 +2,94 @@ import { startCamera } from "./camera.js";
 import { startScanner } from "./scanner.js";
 import { initOpenCV } from "./preprocess.js";
 
+/* =============================
+   DOM ELEMENTS
+   ============================= */
+
 const video = document.getElementById("video");
 const workCanvas = document.getElementById("canvas");
 const overlay = document.getElementById("overlay");
 const gtinBox = document.getElementById("gtin");
 const list = document.getElementById("scan-list");
 const beep = document.getElementById("beep");
-
 const cameraContainer = document.getElementById("camera-container");
+
+const priceModeSelect = document.getElementById("price-mode");
+const priceModal = document.getElementById("price-modal");
+const priceInput = document.getElementById("price-input");
+const priceConfirm = document.getElementById("price-confirm");
 
 const API = "";
 const scanLog = [];
 
-// =============================
-// 🔧 Dynamic camera sizing (NEW)
-// =============================
+const toast = document.getElementById("toast");
+
+function showToast(message, duration = 1500) {
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+
+  setTimeout(() => {
+    toast.classList.add("hidden");
+  }, duration);
+}
+
+
+/* =============================
+   SCAN MODE
+   ============================= */
+
+let priceMode = "no-price";
+
+priceModeSelect.addEventListener("change", () => {
+  priceMode = priceModeSelect.value;
+});
+
+/* =============================
+   PRICE MODAL (ASYNC, NON-BLOCKING)
+   ============================= */
+
+function askPrice() {
+  return new Promise((resolve) => {
+    priceInput.value = "";
+    priceModal.classList.remove("hidden");
+
+    // ensure numeric keyboard on mobile
+    setTimeout(() => priceInput.focus(), 50);
+
+    priceConfirm.onclick = () => {
+      priceModal.classList.add("hidden");
+      resolve(priceInput.value.trim());
+    };
+  });
+}
+
+/* =============================
+   DYNAMIC CAMERA SIZING
+   ============================= */
+
 function adjustCameraHeight() {
   const vh = window.innerHeight;
   const vw = window.innerWidth;
 
-  // Desktop → let CSS handle it
   if (vw > 768) {
     cameraContainer.style.height = "";
     return;
   }
 
   const isLandscape = vw > vh;
-
-  // Tune these numbers freely
   const heightRatio = isLandscape ? 0.55 : 0.36;
-  const cameraHeight = Math.floor(vh * heightRatio);
 
-  cameraContainer.style.height = `${cameraHeight}px`;
-
-  // Overlay must resize with camera
+  cameraContainer.style.height = `${Math.floor(vh * heightRatio)}px`;
   resizeOverlay();
 }
 
-// Recalculate on resize / rotate
 window.addEventListener("resize", adjustCameraHeight);
 window.addEventListener("orientationchange", adjustCameraHeight);
 
-// =============================
-// Unlock audio on mobile
-// =============================
+/* =============================
+   UNLOCK AUDIO (MOBILE)
+   ============================= */
+
 document.body.addEventListener(
   "touchstart",
   () => {
@@ -56,27 +100,31 @@ document.body.addEventListener(
   { once: true }
 );
 
-// =============================
-// Barcode box state
-// =============================
+/* =============================
+   BARCODE BOX STATE
+   ============================= */
+
 let lastBox = null;
 let lastBoxAt = 0;
 const BOX_TTL_MS = 300;
 
-// =============================
-// Start camera
-// =============================
-await startCamera(video);
-adjustCameraHeight(); // 👈 run once after camera starts
+/* =============================
+   START CAMERA
+   ============================= */
 
-// =============================
-// Load OpenCV
-// =============================
+await startCamera(video);
+adjustCameraHeight();
+
+/* =============================
+   LOAD OPENCV
+   ============================= */
+
 initOpenCV().catch(() => {});
 
-// =============================
-// Rounded rectangle helper
-// =============================
+/* =============================
+   DRAWING HELPERS
+   ============================= */
+
 function roundRect(ctx, x, y, w, h, r) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -92,9 +140,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// =============================
-// Resize overlay
-// =============================
 function resizeOverlay() {
   const rect = video.getBoundingClientRect();
   overlay.width = rect.width;
@@ -103,9 +148,10 @@ function resizeOverlay() {
 
 video.onloadedmetadata = resizeOverlay;
 
-// =============================
-// Draw overlay
-// =============================
+/* =============================
+   DRAW OVERLAY
+   ============================= */
+
 function drawOverlay() {
   const ctx = overlay.getContext("2d");
   const w = overlay.width;
@@ -113,9 +159,8 @@ function drawOverlay() {
 
   ctx.clearRect(0, 0, w, h);
 
-  // Focus box
   const boxW = w * 0.7;
-  const boxH = h * 0.25;
+  const boxH = h * 0.35;
   const fx = (w - boxW) / 2;
   const fy = (h - boxH) / 2;
 
@@ -124,7 +169,6 @@ function drawOverlay() {
   roundRect(ctx, fx, fy, boxW, boxH, 18);
   ctx.stroke();
 
-  // Detected barcode box
   if (lastBox && Date.now() - lastBoxAt < BOX_TTL_MS) {
     ctx.save();
     ctx.shadowColor = "rgba(59,130,246,0.6)";
@@ -142,29 +186,42 @@ function drawOverlay() {
 
 setInterval(drawOverlay, 60);
 
-// =============================
-// Batch
-// =============================
-const scanned = new Set();
+/* =============================
+   BATCH / DUPLICATE LOGIC
+   ============================= */
 
-// =============================
-// Start scanner
-// =============================
+const scanned = new Set();
+let lastScannedGtin = null;
+
+/* =============================
+   START SCANNER
+   ============================= */
+
 startScanner(
   video,
   workCanvas,
   async (gtin) => {
-    if (scanned.has(gtin)) return;
+
+    // Same GTIN repeatedly → ignore
+    if (gtin === lastScannedGtin) return;
+
+    // Seen before but not last → warn
+    if (scanned.has(gtin)) {
+  showToast(`GTIN ${gtin} already scanned`);
+  lastScannedGtin = gtin;
+  return;
+}
+
+
     scanned.add(gtin);
+    lastScannedGtin = gtin;
 
     gtinBox.textContent = gtin;
 
-    // Feedback
     beep.currentTime = 0;
     beep.play().catch(() => {});
     if (navigator.vibrate) navigator.vibrate(80);
 
-    // Backend lookup
     const res = await fetch(`${API}/api/check-gtin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -173,17 +230,23 @@ startScanner(
 
     const data = await res.json();
 
-    // Log for CSV
-    scanLog.push({ gtin, status: data.status });
+    let price = "";
 
-    // Add to list
-    const li = document.createElement("li");
-
-    if (data.name) {
-      li.textContent = `${gtin} — ${data.name}`;
-    } else {
-      li.textContent = gtin;
+    if (priceMode === "price") {
+      price = await askPrice();
     }
+
+    scanLog.push({
+      gtin,
+      name: data.name || "",
+      price,
+      status: data.status,
+    });
+
+    const li = document.createElement("li");
+    li.textContent = data.name
+      ? `${gtin} — ${data.name}${price ? ` (${price})` : ""}`
+      : gtin;
 
     li.classList.add(`scan-${data.status}`);
     list.prepend(li);
@@ -205,13 +268,15 @@ startScanner(
   }
 );
 
-// =============================
-// CSV Download
-// =============================
+/* =============================
+   CSV DOWNLOAD
+   ============================= */
+
 document.getElementById("download").onclick = () => {
-  let csv = "gtin,status\n";
+  let csv = "gtin,name,price,status\n";
+
   for (const row of scanLog) {
-    csv += `${row.gtin},${row.status}\n`;
+    csv += `${row.gtin},"${row.name}","${row.price}",${row.status}\n`;
   }
 
   const blob = new Blob([csv], { type: "text/csv" });
