@@ -222,4 +222,64 @@ Scan -> Validate -> Classify -> Export
 
 That's the entire Loop
 
+## ➕ Recent Enhancements (WIP)
+
+The scanner has been extended with several operator-focused improvements to support real-world OPS workflows:
+
+### 🎯 Enhanced Status Logic
+In addition to the original Red / Yellow / Green states, the scanner now supports:
+
+| Status | Meaning |
+|------|------|
+| 🟧 **Orange** | GTIN exists in Catalog / All GTINs but is not yet registered |
+| 🟨 **Yellow** | GTIN exists in Register but one or more upload steps are missing |
+| 🟩 **Green** | GTIN fully processed and live |
+
+Status classification remains backend-driven and OPS-authoritative.
+
+---
+
+### 🏷 Product Name Resolution
+When a GTIN is classified as **Green** or **Yellow**, the backend returns the product’s  
+**Golden Standard Name** (if available).
+
+- Names are displayed inline in the scan list  
+- If no name is available, a safe fallback (`"Name Missing"`) is used  
+- Name handling is non-blocking and does not affect scan performance  
+
+---
+
+### 💰 Optional Price Capture (Operator Mode)
+Operators can now choose between two scan modes on page load:
+
+- **No price** — default, fast scanning  
+- **Price** — prompts for a price after each scan  
+
+Price entry is handled via a **non-blocking UI modal**, ensuring:
+- The camera never freezes  
+- Scanning performance is unaffected  
+- Mobile UX remains smooth  
+
+Captured prices are included in the exported CSV.
+
+---
+
+### 🔁 Duplicate Scan Protection
+The frontend prevents accidental duplicate scans:
+
+- Re-scanning the **same GTIN consecutively** is silently ignored  
+- Re-scanning a previously scanned GTIN (after other items) shows a non-blocking warning  
+- Camera and detection remain fully active at all times  
+
+---
+
+### 📄 Extended CSV Export
+Batch export now supports richer datasets:
+
+```csv
+gtin,name,price,status
+07350058336365,Milk 1L,19.90,green
+0731234561111,Name Missing,,yellow
+```
+
 ---
