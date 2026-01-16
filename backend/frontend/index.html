@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+  >
 
   <title>Barcode Scanner – SWE Catalog Tools</title>
 
@@ -17,12 +20,11 @@
     rel="stylesheet"
   >
 
-  <!-- Scanner CSS -->
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-  <div class="container">
+  <div class="container app-layout">
 
     <!-- HEADER -->
     <div class="header">
@@ -30,37 +32,40 @@
       <p>Scan product GTINs directly from DataBase</p>
     </div>
 
-    <!-- TOOL CARD -->
-    <div class="tool-card tool-card-large">
+    <!-- MAIN APP AREA -->
+    <div class="app-main">
 
-      <div id="camera-container">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="overlay"></canvas>
-        <canvas id="canvas"></canvas>
+      <!-- CAMERA CARD -->
+      <div class="tool-card tool-card-large camera-card">
+        <div id="camera-container">
+          <video id="video" autoplay playsinline></video>
+          <canvas id="overlay"></canvas>
+          <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="scanner-output">
+          <div class="last-scan-label">Last scan</div>
+          <div id="gtin">—</div>
+        </div>
       </div>
 
-      <div class="scanner-output">
-        <div class="last-scan-label">Last scan</div>
-        <div id="gtin">—</div>
+      <!-- LIST CARD -->
+      <div class="tool-card list-card">
+        <h2>Scanned items</h2>
+        <ul id="scan-list"></ul>
       </div>
 
     </div>
 
-    <!-- BATCH LIST -->
-    <div class="tool-card" style="margin-top:24px;">
-      <h2>Scanned items</h2>
-      <ul id="scan-list"></ul>
-    </div>
+    <button id="download" class="primary">
+      Download CSV
+    </button>
 
-    <button id="download" class="primary" style="margin-top:16px;">
-  Download CSV
-</button>
-
-
-
-    <!-- Beep -->
     <audio id="beep">
-      <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
+      <source
+        src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
+        type="audio/ogg"
+      >
     </audio>
 
   </div>

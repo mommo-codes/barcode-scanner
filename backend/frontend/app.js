@@ -8,13 +8,44 @@ const overlay = document.getElementById("overlay");
 const gtinBox = document.getElementById("gtin");
 const list = document.getElementById("scan-list");
 const beep = document.getElementById("beep");
-const status = document.getElementById("status");
+
+const cameraContainer = document.getElementById("camera-container");
 
 const API = "";
-
 const scanLog = [];
 
+// =============================
+// 🔧 Dynamic camera sizing (NEW)
+// =============================
+function adjustCameraHeight() {
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+
+  // Desktop → let CSS handle it
+  if (vw > 768) {
+    cameraContainer.style.height = "";
+    return;
+  }
+
+  const isLandscape = vw > vh;
+
+  // Tune these numbers freely
+  const heightRatio = isLandscape ? 0.55 : 0.36;
+  const cameraHeight = Math.floor(vh * heightRatio);
+
+  cameraContainer.style.height = `${cameraHeight}px`;
+
+  // Overlay must resize with camera
+  resizeOverlay();
+}
+
+// Recalculate on resize / rotate
+window.addEventListener("resize", adjustCameraHeight);
+window.addEventListener("orientationchange", adjustCameraHeight);
+
+// =============================
 // Unlock audio on mobile
+// =============================
 document.body.addEventListener(
   "touchstart",
   () => {
@@ -36,13 +67,12 @@ const BOX_TTL_MS = 300;
 // Start camera
 // =============================
 await startCamera(video);
+adjustCameraHeight(); // 👈 run once after camera starts
 
 // =============================
 // Load OpenCV
 // =============================
-initOpenCV()
-  .then(() => (status.textContent = "CV: OpenCV ready"))
-  .catch(() => (status.textContent = "CV: OpenCV disabled"));
+initOpenCV().catch(() => {});
 
 // =============================
 // Rounded rectangle helper
@@ -72,7 +102,6 @@ function resizeOverlay() {
 }
 
 video.onloadedmetadata = resizeOverlay;
-window.addEventListener("resize", resizeOverlay);
 
 // =============================
 // Draw overlay
@@ -136,40 +165,27 @@ startScanner(
     if (navigator.vibrate) navigator.vibrate(80);
 
     // Backend lookup
-    let res;
-try {
-  res = await fetch(`${API}/api/check-gtin`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ gtin }),
-  });
-} catch (e) {
-  alert("API call failed: " + e.message);
-  return;
-}
+    const res = await fetch(`${API}/api/check-gtin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ gtin }),
+    });
 
-
-    let data;
-try {
-  data = await res.json();
-} catch (e) {
-  alert("JSON parse failed");
-  return;
-}
-
+    const data = await res.json();
 
     // Log for CSV
     scanLog.push({ gtin, status: data.status });
 
     // Add to list
     const li = document.createElement("li");
-    li.textContent = `${gtin} — ${data.status.toUpperCase()}`;
 
-    if (data.status === "red") li.classList.add("scan-red");
-    if (data.status === "yellow") li.classList.add("scan-yellow");
-    if (data.status === "green") li.classList.add("scan-green");
-    if (data.status === "orange") li.classList.add("scan-orange");
+    if (data.name) {
+      li.textContent = `${gtin} — ${data.name}`;
+    } else {
+      li.textContent = gtin;
+    }
 
+    li.classList.add(`scan-${data.status}`);
     list.prepend(li);
   },
   (box) => {

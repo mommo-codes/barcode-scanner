@@ -39,12 +39,19 @@ def check_gtin(req: ScanRequest):
     else:
         status = "red"
 
+    # --- Name logic (NEW) ---
+    name = None
+
+    if status == "green":
+        name = entry["name"] if entry and entry.get("name") else "Name Missing"
+
+    elif status == "yellow":
+        name = entry["name"] if entry and entry.get("name") else "Name Missing"
+
+    # orange / red -> name stays None
+
     return {
         "gtin": gtin,
-        "in_register": in_register,
-        "in_catalog": in_catalog,
-        "in_all_gtins": in_all_gtins,
-        "uploaded_catalog": uploaded_catalog,
-        "uploaded_register": uploaded_register,
-        "status": status,
+        "status": status,  # frontend uses this for background color
+        "name": name,  # frontend shows this instead of status text
     }
