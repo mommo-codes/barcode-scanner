@@ -13,6 +13,7 @@ body {
     color: #374151;
 }
 
+
 /* ============================
    LAYOUT
    ============================ */
@@ -22,6 +23,20 @@ body {
     margin: 0 auto;
     padding: 40px 24px;
 }
+
+.app-layout {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
 
 /* ============================
    HEADER
@@ -46,8 +61,9 @@ body {
     color: #628395;
 }
 
+
 /* ============================
-   TOOL CARD
+   TOOL CARDS
    ============================ */
 
 .tool-card {
@@ -64,36 +80,27 @@ body {
     text-align: center;
 }
 
-/* ============================
-   APP LAYOUT
-   ============================ */
-
-.app-layout {
-    min-height: 100svh; /* allow scroll if needed */
+.list-card {
+    width: 100%;
+    max-width: 520px;
     display: flex;
     flex-direction: column;
 }
-
-.app-main {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    align-items: center; /* center cards */
-}
-
-/* ============================
-   CAMERA
-   ============================ */
 
 .camera-card {
     width: 100%;
     max-width: 520px;
 }
 
+
+/* ============================
+   CAMERA
+   ============================ */
+
 #camera-container {
     position: relative;
     width: 100%;
-    height: 36vh;        /* base height (JS may override) */
+    height: 36vh;
     max-height: 36vh;
     margin: 0 auto;
     border-radius: 12px;
@@ -118,8 +125,9 @@ video {
     display: none;
 }
 
+
 /* ============================
-   OUTPUT
+   SCANNER OUTPUT
    ============================ */
 
 .scanner-output {
@@ -138,22 +146,16 @@ video {
     color: #021738;
 }
 
-/* ============================
-   BATCH LIST
-   ============================ */
 
-.list-card {
-    width: 100%;
-    max-width: 520px;
-    display: flex;
-    flex-direction: column;
-}
+/* ============================
+   SCANNED LIST
+   ============================ */
 
 #scan-list {
     list-style: none;
     padding: 0;
     margin: 12px 0 0 0;
-    max-height: 220px; /* ~5 items */
+    max-height: 220px;
     overflow-y: auto;
 }
 
@@ -166,6 +168,7 @@ video {
     color: #1f2937;
     border-bottom: 1px solid #e5e7eb;
 }
+
 
 /* ============================
    STATUS COLORS
@@ -191,8 +194,9 @@ video {
     background: #d1fae5;
 }
 
+
 /* ============================
-   BUTTON
+   BUTTONS
    ============================ */
 
 button.primary {
@@ -213,8 +217,72 @@ button.primary:hover {
     background: #2563eb;
 }
 
+
 /* ============================
-   MOBILE REFINEMENTS
+   PRICE MODAL
+   ============================ */
+
+.price-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.price-modal.hidden {
+    display: none;
+}
+
+.price-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 300px;
+    text-align: center;
+}
+
+.price-box input {
+    width: 100%;
+    font-size: 18px;
+    padding: 10px;
+    margin: 12px 0;
+}
+
+
+/* ============================
+   TOAST
+   ============================ */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(8px);
+}
+
+
+/* ============================
+   MOBILE
    ============================ */
 
 @media (max-width: 768px) {
@@ -250,57 +318,4 @@ button.primary:hover {
     button.primary {
         margin-top: 12px;
     }
-}
-
-.price-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.price-modal.hidden {
-  display: none;
-}
-
-.price-box {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 300px;
-  text-align: center;
-}
-
-.price-box input {
-  width: 100%;
-  font-size: 18px;
-  padding: 10px;
-  margin: 12px 0;
-}
-
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #111827;
-  color: white;
-  padding: 12px 16px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-  z-index: 1000;
-  opacity: 1;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.toast.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(-50%) translateY(8px);
 }

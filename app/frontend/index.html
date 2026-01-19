@@ -9,10 +9,8 @@
 
   <title>Barcode Scanner – SWE Catalog Tools</title>
 
-  <!-- Adobe Fonts -->
   <link rel="stylesheet" href="https://use.typekit.net/txf7cul.css">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -23,13 +21,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 
-<div id="toast" class="toast hidden"></div>
-
-
 <body>
+  <div id="toast" class="toast hidden"></div>
+
   <div class="container app-layout">
 
-    <!-- HEADER -->
     <div class="header">
       <h1>Barcode Scanner</h1>
       <p>Scan product GTINs directly from DataBase</p>
@@ -43,10 +39,7 @@
       </div>
     </div>
 
-    <!-- MAIN APP AREA -->
     <div class="app-main">
-
-      <!-- CAMERA CARD -->
       <div class="tool-card tool-card-large camera-card">
         <div id="camera-container">
           <video id="video" autoplay playsinline></video>
@@ -60,19 +53,16 @@
         </div>
       </div>
 
-      <!-- LIST CARD -->
       <div class="tool-card list-card">
         <h2>Scanned items</h2>
         <ul id="scan-list"></ul>
       </div>
-
     </div>
 
     <button id="download" class="primary">
       Download CSV
     </button>
 
-    <!-- 🔹 PRICE INPUT MODAL (NON-BLOCKING) -->
     <div id="price-modal" class="price-modal hidden">
       <div class="price-box">
         <h3>Enter price</h3>
@@ -87,16 +77,10 @@
       </div>
     </div>
 
-    <!-- Beep -->
-    <audio id="beep">
-      <source
-        src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-        type="audio/ogg"
-      >
-    </audio>
+    <audio id="beep"></audio>
 
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="js/app/main.js"></script>
 </body>
 </html>

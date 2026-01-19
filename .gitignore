@@ -1,4 +1,4 @@
-backend/secrets/
+app/secrets
 *.json
 .venv/
 __pycache__/
