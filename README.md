@@ -282,4 +282,56 @@ gtin,name,price,status
 0731234561111,Name Missing,,yellow
 ```
 
+## 💾 Local Batch Persistence & Controls
+
+To support real-world OPS workflows, the scanner now includes **local batch persistence** and **explicit batch controls**.  
+This ensures scans are never lost due to refreshes, device sleep, or short breaks.
+
+---
+
+### 🔁 Persistent Scan History (LocalStorage)
+
+All scanned items are automatically saved to the browser’s **localStorage**.
+
+**What this means:**
+- Refreshing the page does **not** clear the scan list
+- Closing and reopening the tab preserves the batch
+- Mobile sleep / app switching does not lose data
+- CSV export always includes the full current batch
+
+**How it works:**
+- Each successful scan is appended to an in-memory array
+- The array is serialized and saved to `localStorage` after every scan
+- On page load, saved scans are restored and re-rendered into the UI
+
+Stored data includes:
+- `gtin`
+- `name` (Golden Standard Name if available)
+- `price` (optional, operator-entered)
+- `status` (red / yellow / orange / green)
+- timestamp
+
+This provides **device-level durability** without requiring backend storage or authentication.
+
+---
+
+### 🧹 Clear Batch Control
+
+A dedicated **Clear batch** button is available below the scanner.
+
+**Behavior:**
+- Prompts for confirmation before clearing
+- Resets:
+  - Visible scan list
+  - In-memory batch state
+  - LocalStorage persistence
+  - Duplicate-scan tracking
+- Scanner and camera remain active (no reload required)
+
+This mirrors real warehouse workflows such as:
+- New pallet
+- New box
+- New delivery
+- New audit batch
+
 ---

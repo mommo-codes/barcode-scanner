@@ -2,7 +2,6 @@ import { startCamera } from "./camera.js";
 import { startScanner } from "./scanner.js";
 import { initOpenCV } from "./preprocess.js";
 
-// localstorage
 const STORAGE_KEY = "barcode_scanner_history_v1";
 
 function loadHistory() {
@@ -18,7 +17,6 @@ function saveHistory(history) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
 }
 
-// dom elemenst
 const video = document.getElementById("video");
 const workCanvas = document.getElementById("canvas");
 const overlay = document.getElementById("overlay");
@@ -35,7 +33,7 @@ const priceConfirm = document.getElementById("price-confirm");
 const toast = document.getElementById("toast");
 const API = "";
 
-// scan history
+// load existing scan log
 let scanLog = loadHistory();
 const scanned = new Set(scanLog.map(r => r.gtin));
 let lastScannedGtin = scanLog.length
@@ -43,22 +41,45 @@ let lastScannedGtin = scanLog.length
   : null;
 
 
-scanLog.forEach(row => {
-  const li = document.createElement("li");
-  li.textContent = row.name
-    ? `${row.gtin} — ${row.name}${row.price ? ` (${row.price})` : ""}`
-    : row.gtin;
-
-  li.classList.add(`scan-${row.status}`);
-  list.prepend(li);
-});
-
-
 function showToast(message, duration = 1500) {
   toast.textContent = message;
   toast.classList.remove("hidden");
   setTimeout(() => toast.classList.add("hidden"), duration);
 }
+
+function renderScanRow(row) {
+  const li = document.createElement("li");
+
+  const text = document.createElement("span");
+  text.textContent = row.name
+    ? `${row.gtin} — ${row.name}${row.price ? ` (${row.price})` : ""}`
+    : row.gtin;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.textContent = "×";
+  removeBtn.className = "remove-item";
+  removeBtn.title = "Remove item";
+
+  removeBtn.onclick = () => {
+    scanLog = scanLog.filter(r => r !== row);
+    saveHistory(scanLog);
+
+    scanned.delete(row.gtin);
+    if (lastScannedGtin === row.gtin) {
+      lastScannedGtin = null;
+    }
+
+    li.remove();
+  };
+
+  li.classList.add(`scan-${row.status}`);
+  li.appendChild(text);
+  li.appendChild(removeBtn);
+
+  list.prepend(li);
+}
+// render existing log
+scanLog.forEach(renderScanRow);
 
 // price mode
 let priceMode = "no-price";
@@ -68,7 +89,7 @@ priceModeSelect.addEventListener("change", () => {
 });
 
 function askPrice() {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     priceInput.value = "";
     priceModal.classList.remove("hidden");
     setTimeout(() => priceInput.focus(), 50);
@@ -92,15 +113,15 @@ function adjustCameraHeight() {
 
   const isLandscape = vw > vh;
   const heightRatio = isLandscape ? 0.55 : 0.36;
-
   cameraContainer.style.height = `${Math.floor(vh * heightRatio)}px`;
+
   resizeOverlay();
 }
 
 window.addEventListener("resize", adjustCameraHeight);
 window.addEventListener("orientationchange", adjustCameraHeight);
 
-// unlock audio on mobile
+// unlock audio mobile
 document.body.addEventListener(
   "touchstart",
   () => {
@@ -173,10 +194,12 @@ function drawOverlay() {
 
 setInterval(drawOverlay, 60);
 
+
 await startCamera(video);
 adjustCameraHeight();
 initOpenCV().catch(() => {});
 
+//scanner
 startScanner(
   video,
   workCanvas,
@@ -220,14 +243,7 @@ startScanner(
 
     scanLog.push(row);
     saveHistory(scanLog);
-
-    const li = document.createElement("li");
-    li.textContent = row.name
-      ? `${gtin} — ${row.name}${price ? ` (${price})` : ""}`
-      : gtin;
-
-    li.classList.add(`scan-${row.status}`);
-    list.prepend(li);
+    renderScanRow(row);
   },
   (box) => {
     if (!box) return;
@@ -265,7 +281,7 @@ document.getElementById("download").onclick = () => {
   URL.revokeObjectURL(url);
 };
 
-//clear
+// clear
 document.getElementById("clear-batch")?.addEventListener("click", () => {
   if (!confirm("Clear all scanned items?")) return;
 

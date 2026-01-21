@@ -312,3 +312,27 @@ button.secondary:hover {
         margin-top: 8px;
     }
 }
+
+#scan-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.remove-item {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.remove-item:hover {
+    color: #7f1d1d;
+    background: #fee2e2;
+}
