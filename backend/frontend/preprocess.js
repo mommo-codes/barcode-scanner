@@ -1,6 +1,4 @@
-// preprocess.js
-// - "enhance": lightweight Canvas grayscale/contrast/sharpen
-// - "cv": OpenCV.js WASM rescue mode (adaptive threshold + morphology + blur gate)
+// preprocess.js, unsure of everything in here, some things, chat used so learn more about them and refactor. 
 
 let cvReady = false;
 let cvLoading = null;
@@ -22,9 +20,8 @@ export async function initOpenCV() {
     const script = document.createElement("script");
     script.async = true;
 
-    // Official docs-hosted prebuilt opencv.js (recommended by OpenCV docs)
+    // Official docs-hosted prebuilt opencv.js
     // https://docs.opencv.org/{VERSION}/opencv.js or /4.x/opencv.js for latest 4.x
-    // :contentReference[oaicite:1]{index=1}
     script.src = "https://docs.opencv.org/4.x/opencv.js";
 
     script.onload = () => {
@@ -56,9 +53,7 @@ export function preprocessToCanvas(ctx, w, h, mode = "enhance") {
   // mode === "none"
 }
 
-/* ---------------------------
-   Lightweight Canvas pipeline
----------------------------- */
+// canvas pipeline: contrast + sharpen
 function preprocessCanvas(ctx, w, h) {
   const img = ctx.getImageData(0, 0, w, h);
   const data = img.data;
@@ -104,25 +99,25 @@ function preprocessCanvas(ctx, w, h) {
   ctx.putImageData(dst, 0, 0);
 }
 
-/* ---------------------------
-   OpenCV.js rescue pipeline
----------------------------- */
+// OpenCV.js rescue pipeline
 function preprocessOpenCV(ctx, w, h) {
   const cv = window.cv;
 
   // Read from the current canvas pixels into a Mat
   // cv.imread can take a canvas element id or element. We don't have direct element here,
   // so we use ImageData -> Mat.
+  //TODO
   const imgData = ctx.getImageData(0, 0, w, h);
   let src = cv.matFromImageData(imgData);
 
   try {
-    // Convert RGBA -> GRAY
+    // RGBA -> GRAY
     let gray = new cv.Mat();
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
     // Blur gate: skip expensive processing if frame is too blurry
     // Compute variance of Laplacian; low variance => blur.
+    //TODO
     const sharpness = laplacianVariance(gray);
     if (sharpness < 45) {
       gray.delete();

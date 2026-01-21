@@ -8,7 +8,7 @@ import os
 
 app = FastAPI()
 
-# CORS (phone + ngrok safe)
+# CORS (phone + ngrok safe) # a bit unsure, learn more about this code.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,14 +17,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount frontend
+# frontend
 BASE_DIR = os.path.dirname(__file__)
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 
-# Redirect root → frontend
+# root → frontend
 @app.get("/")
 def root():
     return RedirectResponse("/frontend/")

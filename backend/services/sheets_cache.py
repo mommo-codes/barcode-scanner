@@ -5,25 +5,30 @@ from google.oauth2.service_account import Credentials
 
 SHEET_ID = "12p32y4q_UrdaK3SvMutiflX0ukFQ8IJgP8hRaNwOvuE"
 
-REGISTER_GID = 1645599058  # ~85k rows (Register)
-CATALOG_GID = 886259106  # ~960k rows (Catalog)
+REGISTER_GID = 1645599058  # register
+CATALOG_GID = 886259106  # catalog (all gtins)
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets.readonly",
     "https://www.googleapis.com/auth/drive.readonly",
 ]
 
+
+def minutes_to_seconds(minutes: int) -> int:
+    return minutes * 60
+
+
 SERVICE_ACCOUNT_FILE = "backend/secrets/service_account.json"
-CACHE_REFRESH_SECONDS = 30 * 60  # 30 minutes
+CACHE_REFRESH_SECONDS = minutes_to_seconds(30)
 
 _cache = {
     "register": {},  # gtin14 -> { uploaded_catalog, uploaded_register, name }
     "catalog": set(),  # gtin14
-    "all_gtins": set(),  # gtin14 (same as catalog sheet)
+    "all_gtins": set(),  # gtin14
 }
 
 
-# --- Normalize to GTIN-14 ---
+# normalize to gtin14
 def normalize(gtin: str) -> str:
     gtin = gtin.strip()
     if len(gtin) == 13:
@@ -31,7 +36,6 @@ def normalize(gtin: str) -> str:
     return gtin
 
 
-# --- Header utilities ---
 def _normalize_header(h: str) -> str:
     return h.strip().lower().replace("_", " ")
 
@@ -58,7 +62,7 @@ def _get_str(row: list[str], idx: int | None) -> str | None:
 
 
 def load_cache():
-    print("🔄 Refreshing Google Sheets cache...")
+    print("Refreshing Google Sheets cache...")
 
     creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     gc = gspread.authorize(creds)
@@ -77,7 +81,7 @@ def load_cache():
     idx_uploaded_register = _find_col(headers, "Uppladdad_i_Register")
     idx_name = _find_col(headers, "Golden_Standard_Name")
 
-    # --- Register ---
+    # register
     reg = {}
     for row in register_rows[1:]:
         if not row or not row[0]:
@@ -91,7 +95,7 @@ def load_cache():
             "name": _get_str(row, idx_name),
         }
 
-    # --- Catalog / All GTINs ---
+    # catalog/ all gtins
     cat = set()
     all_gtins = set()
 
@@ -105,7 +109,7 @@ def load_cache():
     _cache["catalog"] = cat
     _cache["all_gtins"] = all_gtins
 
-    print(f"✅ Cache loaded: " f"{len(reg)} register, " f"{len(cat)} catalog/all_gtins")
+    print(f"Cache loaded: " f"{len(reg)} register, " f"{len(cat)} catalog/all_gtins")
 
 
 def background_refresh():
@@ -113,12 +117,12 @@ def background_refresh():
         try:
             load_cache()
         except Exception as e:
-            print("❌ Cache refresh failed:", e)
+            print("Cache refresh failed:", e)
 
         time.sleep(CACHE_REFRESH_SECONDS)
 
 
-# Start background thread on import
+# background thread to refresh cache
 threading.Thread(target=background_refresh, daemon=True).start()
 
 

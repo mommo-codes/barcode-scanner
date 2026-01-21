@@ -4,24 +4,17 @@ import { preprocessToCanvas } from "./preprocess.js";
 
 const reader = new BrowserMultiFormatReader();
 
-// ============================
-// Temporal stability
-// ============================
 const recent = []; // { code, time }
 let lastAccepted = null;
 let lastAcceptedAt = 0;
 
-// ============================
-// Timing & consensus
-// ============================
+// time constants
 const DECODE_INTERVAL_MS = 60;
 const CONSENSUS_WINDOW_MS = 400;
 const CONSENSUS_MIN_HITS = 2;
 const ACCEPT_COOLDOWN_MS = 700;
 
-// ============================
-// Adaptive difficulty (Scandit-style)
-// ============================
+// adapt difficulty
 let difficulty = 0; // 0 = easy, 1 = medium, 2 = hard
 let lastSuccessAt = Date.now();
 
@@ -42,9 +35,7 @@ function updateDifficulty(success) {
   }
 }
 
-// ============================
 // Adaptive crop sizes
-// ============================
 function getCropRects(w, h) {
   const scale = difficulty === 0 ? 0.65 : difficulty === 1 ? 0.75 : 0.85;
   const cw = Math.floor(w * scale);
@@ -61,9 +52,7 @@ function getCropRects(w, h) {
   ];
 }
 
-// ============================
-// GTIN validation
-// ============================
+// gtin validation
 function isLikelyGTIN(s) {
   if (!/^\d{8}(\d{4}|\d{5}|\d{6})?$/.test(s)) return false;
   return [8, 12, 13, 14].includes(s.length);
@@ -84,9 +73,6 @@ function gtinChecksumValid(gtin) {
   return calc === check;
 }
 
-// ============================
-// Temporal consensus
-// ============================
 function pushRecent(code) {
   const now = Date.now();
   recent.push({ code, time: now });
@@ -111,18 +97,13 @@ function accept(code, onResult) {
   onResult(code);
 }
 
-// ============================
-// Decode helper (return result object)
-// ============================
+// decode helper
 async function tryDecodeResultFromCanvas(canvas) {
   // ZXing throws if none found
   return await reader.decodeFromCanvas(canvas);
 }
 
 function getPointsFromResult(result) {
-  // Depending on build/version, points may be:
-  // - result.resultPoints (array)
-  // - result.getResultPoints() (function)
   const pts =
     (result && Array.isArray(result.resultPoints) && result.resultPoints) ||
     (result && typeof result.getResultPoints === "function" && result.getResultPoints()) ||
@@ -141,8 +122,9 @@ function getPointsFromResult(result) {
     .filter(Boolean);
 }
 
-// Build a bounding box in *crop coordinates* from result points.
-// For 1D codes, ZXing often returns 2 points (start/end along a row). :contentReference[oaicite:1]{index=1}
+// bounding box
+// For 1D codes, ZXing often returns 2 points (start/end along a row). :contentReference[oaicite:1]{index=1} // need to learn more about this. 
+// TODO: check if this works well for 2D codes too.
 function pointsToBox(points, cropW, cropH) {
   if (!points || points.length === 0) return null;
 
@@ -154,7 +136,7 @@ function pointsToBox(points, cropW, cropH) {
     maxY = Math.max(maxY, p.y);
   }
 
-  // If we only got a "line" (common for 1D), infer a reasonable height box.
+  // height and width based on points
   const width = maxX - minX;
   const height = maxY - minY;
 
@@ -168,7 +150,7 @@ function pointsToBox(points, cropW, cropH) {
   const padY = Math.max(8, Math.floor(cropH * 0.03));
 
   if (height < 8) {
-    // likely just two points in same row -> make a band
+    // likely just two points in same row -> make a band // make this more adaptive
     const bandH = Math.max(40, Math.floor(cropH * 0.25));
     const midY = (minY + maxY) / 2;
     boxMinY = midY - bandH / 2;

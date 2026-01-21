@@ -2,9 +2,6 @@ import { startCamera } from "./camera.js";
 import { startScanner } from "./scanner.js";
 import { initOpenCV } from "./preprocess.js";
 
-/* =============================
-   DOM ELEMENTS
-   ============================= */
 
 const video = document.getElementById("video");
 const workCanvas = document.getElementById("canvas");
@@ -34,19 +31,13 @@ function showToast(message, duration = 1500) {
 }
 
 
-/* =============================
-   SCAN MODE
-   ============================= */
-
 let priceMode = "no-price";
 
 priceModeSelect.addEventListener("change", () => {
   priceMode = priceModeSelect.value;
 });
 
-/* =============================
-   PRICE MODAL (ASYNC, NON-BLOCKING)
-   ============================= */
+
 
 function askPrice() {
   return new Promise((resolve) => {
@@ -63,10 +54,8 @@ function askPrice() {
   });
 }
 
-/* =============================
-   DYNAMIC CAMERA SIZING
-   ============================= */
 
+// dynamic camera sizing for mobile
 function adjustCameraHeight() {
   const vh = window.innerHeight;
   const vw = window.innerWidth;
@@ -86,10 +75,8 @@ function adjustCameraHeight() {
 window.addEventListener("resize", adjustCameraHeight);
 window.addEventListener("orientationchange", adjustCameraHeight);
 
-/* =============================
-   UNLOCK AUDIO (MOBILE)
-   ============================= */
 
+// unlocking audio on mobile
 document.body.addEventListener(
   "touchstart",
   () => {
@@ -100,31 +87,20 @@ document.body.addEventListener(
   { once: true }
 );
 
-/* =============================
-   BARCODE BOX STATE
-   ============================= */
 
 let lastBox = null;
 let lastBoxAt = 0;
 const BOX_TTL_MS = 300;
 
-/* =============================
-   START CAMERA
-   ============================= */
 
+// camera start
 await startCamera(video);
 adjustCameraHeight();
 
-/* =============================
-   LOAD OPENCV
-   ============================= */
 
 initOpenCV().catch(() => {});
 
-/* =============================
-   DRAWING HELPERS
-   ============================= */
-
+// helpers
 function roundRect(ctx, x, y, w, h, r) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -147,10 +123,6 @@ function resizeOverlay() {
 }
 
 video.onloadedmetadata = resizeOverlay;
-
-/* =============================
-   DRAW OVERLAY
-   ============================= */
 
 function drawOverlay() {
   const ctx = overlay.getContext("2d");
@@ -186,16 +158,8 @@ function drawOverlay() {
 
 setInterval(drawOverlay, 60);
 
-/* =============================
-   BATCH / DUPLICATE LOGIC
-   ============================= */
-
 const scanned = new Set();
 let lastScannedGtin = null;
-
-/* =============================
-   START SCANNER
-   ============================= */
 
 startScanner(
   video,
@@ -268,10 +232,8 @@ startScanner(
   }
 );
 
-/* =============================
-   CSV DOWNLOAD
-   ============================= */
 
+// csv download
 document.getElementById("download").onclick = () => {
   let csv = "gtin,name,price,status\n";
 
