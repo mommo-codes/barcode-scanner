@@ -24,7 +24,7 @@ FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 
-# root → frontend
+# Redirect root → frontend
 @app.get("/")
 def root():
     return RedirectResponse("/frontend/")

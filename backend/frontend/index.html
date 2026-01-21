@@ -23,10 +23,11 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 
-<div id="toast" class="toast hidden"></div>
-
-
 <body>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
   <div class="container app-layout">
 
     <!-- HEADER -->
@@ -68,9 +69,16 @@
 
     </div>
 
-    <button id="download" class="primary">
-      Download CSV
-    </button>
+    <!-- ACTIONS -->
+    <div class="actions">
+      <button id="download" class="primary">
+        Download CSV
+      </button>
+
+      <button id="clear-batch" class="secondary">
+        Clear batch
+      </button>
+    </div>
 
     <!-- PRICE INPUT MODAL -->
     <div id="price-modal" class="price-modal hidden">
@@ -88,12 +96,10 @@
     </div>
 
     <!-- Beep -->
-    <audio id="beep">
-      <source
-        src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"
-        type="audio/ogg"
-      >
-    </audio>
+    <audio id="beep" preload="auto">
+  <source src="scanner-hit.wav" type="audio/wav">
+</audio>
+
 
   </div>
 

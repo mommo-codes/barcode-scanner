@@ -2,7 +2,23 @@ import { startCamera } from "./camera.js";
 import { startScanner } from "./scanner.js";
 import { initOpenCV } from "./preprocess.js";
 
+// localstorage
+const STORAGE_KEY = "barcode_scanner_history_v1";
 
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(history) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+}
+
+// dom elemenst
 const video = document.getElementById("video");
 const workCanvas = document.getElementById("canvas");
 const overlay = document.getElementById("overlay");
@@ -16,35 +32,45 @@ const priceModal = document.getElementById("price-modal");
 const priceInput = document.getElementById("price-input");
 const priceConfirm = document.getElementById("price-confirm");
 
-const API = "";
-const scanLog = [];
-
 const toast = document.getElementById("toast");
+const API = "";
+
+// scan history
+let scanLog = loadHistory();
+const scanned = new Set(scanLog.map(r => r.gtin));
+let lastScannedGtin = scanLog.length
+  ? scanLog[scanLog.length - 1].gtin
+  : null;
+
+
+scanLog.forEach(row => {
+  const li = document.createElement("li");
+  li.textContent = row.name
+    ? `${row.gtin} — ${row.name}${row.price ? ` (${row.price})` : ""}`
+    : row.gtin;
+
+  li.classList.add(`scan-${row.status}`);
+  list.prepend(li);
+});
+
 
 function showToast(message, duration = 1500) {
   toast.textContent = message;
   toast.classList.remove("hidden");
-
-  setTimeout(() => {
-    toast.classList.add("hidden");
-  }, duration);
+  setTimeout(() => toast.classList.add("hidden"), duration);
 }
 
-
+// price mode
 let priceMode = "no-price";
 
 priceModeSelect.addEventListener("change", () => {
   priceMode = priceModeSelect.value;
 });
 
-
-
 function askPrice() {
   return new Promise((resolve) => {
     priceInput.value = "";
     priceModal.classList.remove("hidden");
-
-    // ensure numeric keyboard on mobile
     setTimeout(() => priceInput.focus(), 50);
 
     priceConfirm.onclick = () => {
@@ -54,8 +80,7 @@ function askPrice() {
   });
 }
 
-
-// dynamic camera sizing for mobile
+// camera height adjustment
 function adjustCameraHeight() {
   const vh = window.innerHeight;
   const vw = window.innerWidth;
@@ -75,8 +100,7 @@ function adjustCameraHeight() {
 window.addEventListener("resize", adjustCameraHeight);
 window.addEventListener("orientationchange", adjustCameraHeight);
 
-
-// unlocking audio on mobile
+// unlock audio on mobile
 document.body.addEventListener(
   "touchstart",
   () => {
@@ -87,20 +111,11 @@ document.body.addEventListener(
   { once: true }
 );
 
-
+// overlay
 let lastBox = null;
 let lastBoxAt = 0;
 const BOX_TTL_MS = 300;
 
-
-// camera start
-await startCamera(video);
-adjustCameraHeight();
-
-
-initOpenCV().catch(() => {});
-
-// helpers
 function roundRect(ctx, x, y, w, h, r) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -158,28 +173,24 @@ function drawOverlay() {
 
 setInterval(drawOverlay, 60);
 
-const scanned = new Set();
-let lastScannedGtin = null;
+await startCamera(video);
+adjustCameraHeight();
+initOpenCV().catch(() => {});
 
 startScanner(
   video,
   workCanvas,
   async (gtin) => {
-
-    // Same GTIN repeatedly → ignore
     if (gtin === lastScannedGtin) return;
 
-    // Seen before but not last → warn
     if (scanned.has(gtin)) {
-  showToast(`GTIN ${gtin} already scanned`);
-  lastScannedGtin = gtin;
-  return;
-}
-
+      showToast(`GTIN ${gtin} already scanned`);
+      lastScannedGtin = gtin;
+      return;
+    }
 
     scanned.add(gtin);
     lastScannedGtin = gtin;
-
     gtinBox.textContent = gtin;
 
     beep.currentTime = 0;
@@ -195,24 +206,27 @@ startScanner(
     const data = await res.json();
 
     let price = "";
-
     if (priceMode === "price") {
       price = await askPrice();
     }
 
-    scanLog.push({
+    const row = {
       gtin,
       name: data.name || "",
       price,
       status: data.status,
-    });
+      ts: Date.now(),
+    };
+
+    scanLog.push(row);
+    saveHistory(scanLog);
 
     const li = document.createElement("li");
-    li.textContent = data.name
-      ? `${gtin} — ${data.name}${price ? ` (${price})` : ""}`
+    li.textContent = row.name
+      ? `${gtin} — ${row.name}${price ? ` (${price})` : ""}`
       : gtin;
 
-    li.classList.add(`scan-${data.status}`);
+    li.classList.add(`scan-${row.status}`);
     list.prepend(li);
   },
   (box) => {
@@ -232,8 +246,7 @@ startScanner(
   }
 );
 
-
-// csv download
+// csv
 document.getElementById("download").onclick = () => {
   let csv = "gtin,name,price,status\n";
 
@@ -251,3 +264,17 @@ document.getElementById("download").onclick = () => {
 
   URL.revokeObjectURL(url);
 };
+
+//clear
+document.getElementById("clear-batch")?.addEventListener("click", () => {
+  if (!confirm("Clear all scanned items?")) return;
+
+  scanLog = [];
+  saveHistory(scanLog);
+
+  scanned.clear();
+  lastScannedGtin = null;
+
+  list.innerHTML = "";
+  gtinBox.textContent = "—";
+});
